@@ -68,7 +68,7 @@ const proxyOptions = {
 // setting up proxy for our identity service
 app.use(
   "/v1/auth",
-  proxy(process.env.IDENTITY_SERVICE_URL, {
+  proxy(IDENTITY_SERVICE_URL, {
     ...proxyOptions,
     proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
       proxyReqOpts.headers["Content-Type"] = "application/json";
@@ -89,8 +89,6 @@ app.use(notFoundHandler);
 
 app.listen(port, () => {
   logger.info(`API Gateway is running on port ${port}`);
-  logger.info(
-    `Identity Service is running on ${process.env.IDENTITY_SERVICE_URL}`
-  );
+  logger.info(`Identity Service is running on ${IDENTITY_SERVICE_URL}`);
   logger.info(`Redis is running on ${process.env.REDIS_URL}`);
 });

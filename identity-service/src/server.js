@@ -82,6 +82,7 @@ const sensitiveEndpoints = rateLimit({
 
 // apply rate limiting to sensitive endpoints
 app.use("/api/auth/register", sensitiveEndpoints);
+app.use("/api/auth/login", sensitiveEndpoints);
 
 // routes
 app.use("/api/auth", routes);
