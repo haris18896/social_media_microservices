@@ -16,7 +16,7 @@ const generateTokens = async (user) => {
 
   await RefreshToken.create({
     token: refreshToken,
-    userId: user._id,
+    user: user._id,
     expiresAt,
   });
 
