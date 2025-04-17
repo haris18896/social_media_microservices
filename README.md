@@ -5,7 +5,8 @@
 ```bash
 # api-gateway
 npm install nodemon prettier --save-dev
-npm install cors dotenv express express-http-proxy helmet ioredis jsonwebtoken winston
+npm install cors dotenv express express-http-proxy helmet ioredis
+npm install jsonwebtoken winston express-rate-limit rate-limit-redis rate-limiter-flexible
 
 # identity-service
 npm install nodemon prettier concurrently --save-dev
