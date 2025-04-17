@@ -13,3 +13,5 @@ npm install nodemon prettier concurrently --save-dev
 npm install cors argon2 dotenv express express-rate-limit helmet ioredis joi 
 npm install jsonwebtoken mongoose rate-limit-redis winston rate-limiter-flexible winston
 ```
+
+* now we are going to create 3 more servie `media-service`, `post-service` and `search-service`
