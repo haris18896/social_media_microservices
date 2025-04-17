@@ -8,6 +8,7 @@ npm install nodemon prettier --save-dev
 npm install cors dotenv express express-http-proxy helmet ioredis jsonwebtoken winston
 
 # identity-service
-npm install nodemon prettier --save-dev
-npm install cors argon2 dotenv express express-rate-limit helmet ioredis joi jsonwebtoken mongoose rate-limit-redis winston
+npm install nodemon prettier concurrently --save-dev
+npm install cors argon2 dotenv express express-rate-limit helmet ioredis joi 
+npm install jsonwebtoken mongoose rate-limit-redis winston rate-limiter-flexible winston
 ```
