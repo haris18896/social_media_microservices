@@ -1,0 +1,685 @@
+openapi: 3.0.0
+info:
+  title: Social Media Microservices API
+  description: API documentation for the Social Media Microservices platform
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: /v1
+    description: API Gateway
+
+tags:
+  - name: Authentication
+    description: User authentication endpoints
+  - name: Posts
+    description: Post management endpoints
+  - name: Media
+    description: Media upload and management endpoints
+  - name: Search
+    description: Search functionality endpoints
+  - name: Health
+    description: Health check endpoints
+
+paths:
+  # Identity Service Routes
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      description: Create a new user account with username, email, and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                  example: johndoe
+                email:
+                  type: string
+                  format: email
+                  example: john.doe@example.com
+                password:
+                  type: string
+                  format: password
+                  example: P@ssw0rd123
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email or username already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Log in a user
+      description: Authenticate a user with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john.doe@example.com
+                password:
+                  type: string
+                  format: password
+                  example: P@ssw0rd123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh-token:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Get a new access token using a valid refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  example: a1b2c3d4e5f6g7h8i9j0
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/profile:
+    get:
+      tags:
+        - Authentication
+      summary: Get user profile
+      description: Retrieve the authenticated user's profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Post Service Routes
+  /posts:
+    get:
+      tags:
+        - Posts
+      summary: Get posts feed
+      description: Get a paginated list of posts
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Number of posts per page
+          schema:
+            type: integer
+            default: 10
+        - name: sort
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [recent, popular]
+            default: recent
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of posts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostsListResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
+    post:
+      tags:
+        - Posts
+      summary: Create a new post
+      description: Create a new post with content and optional media attachments
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                  example: "This is a sample post content"
+                mediaIds:
+                  type: array
+                  items:
+                    type: string
+                  example: ["media123", "media456"]
+                visibility:
+                  type: string
+                  enum: [public, friends, private]
+                  default: public
+      responses:
+        '201':
+          description: Post created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Media Service Routes
+  /media/upload:
+    post:
+      tags:
+        - Media
+      summary: Upload media
+      description: Upload images or videos
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                type:
+                  type: string
+                  enum: [image, video]
+                  default: image
+      responses:
+        '201':
+          description: Media uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Search Service Routes
+  /search:
+    get:
+      tags:
+        - Search
+      summary: Search content
+      description: Search posts, users, and other content
+      parameters:
+        - name: q
+          in: query
+          description: Search query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Type of content to search
+          schema:
+            type: string
+            enum: [all, posts, users]
+            default: all
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Results per page
+          schema:
+            type: integer
+            default: 10
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Health Check Routes
+  /health:
+    get:
+      tags:
+        - Health
+      summary: API Gateway health
+      description: Check if the API Gateway is running
+      responses:
+        '200':
+          description: API Gateway is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: UP
+                  timestamp:
+                    type: string
+                    format: date-time
+                  service:
+                    type: string
+                    example: api-gateway
+
+  /services/health:
+    get:
+      tags:
+        - Health
+      summary: Services health
+      description: Check the health of all microservices
+      responses:
+        '200':
+          description: All services are healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: UP
+                  timestamp:
+                    type: string
+                    format: date-time
+                  services:
+                    type: object
+                    properties:
+                      identity:
+                        type: object
+                        properties:
+                          status:
+                            type: boolean
+                            example: true
+                      post:
+                        type: object
+                        properties:
+                          status:
+                            type: boolean
+                            example: true
+                      search:
+                        type: object
+                        properties:
+                          status:
+                            type: boolean
+                            example: true
+                      media:
+                        type: object
+                        properties:
+                          status:
+                            type: boolean
+                            example: true
+        '503':
+          description: One or more services are down
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: DEGRADED
+                  timestamp:
+                    type: string
+                    format: date-time
+                  services:
+                    type: object
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            accessToken:
+              type: string
+              example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+            refreshToken:
+              type: string
+              example: a1b2c3d4e5f6g7h8i9j0...
+            user:
+              type: object
+              properties:
+                id:
+                  type: string
+                  example: 60d21b4667d0d8992e610c85
+                username:
+                  type: string
+                  example: johndoe
+                email:
+                  type: string
+                  example: john.doe@example.com
+    
+    ProfileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              example: 60d21b4667d0d8992e610c85
+            username:
+              type: string
+              example: johndoe
+            email:
+              type: string
+              example: john.doe@example.com
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    
+    PostResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              example: 60d21b4667d0d8992e610c85
+            content:
+              type: string
+              example: "This is a sample post content"
+            author:
+              type: object
+              properties:
+                id:
+                  type: string
+                  example: 60d21b4667d0d8992e610c85
+                username:
+                  type: string
+                  example: johndoe
+            media:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: media123
+                  type:
+                    type: string
+                    example: image
+                  url:
+                    type: string
+                    example: https://example.com/media/image.jpg
+            visibility:
+              type: string
+              example: public
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    
+    PostsListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            posts:
+              type: array
+              items:
+                $ref: '#/components/schemas/PostResponse/properties/data'
+            pagination:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  example: 1
+                limit:
+                  type: integer
+                  example: 10
+                totalDocs:
+                  type: integer
+                  example: 100
+                totalPages:
+                  type: integer
+                  example: 10
+                hasNextPage:
+                  type: boolean
+                  example: true
+                hasPrevPage:
+                  type: boolean
+                  example: false
+    
+    MediaResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              example: media123
+            type:
+              type: string
+              example: image
+            url:
+              type: string
+              example: https://example.com/media/image.jpg
+            thumbnailUrl:
+              type: string
+              example: https://example.com/media/image_thumb.jpg
+            size:
+              type: integer
+              example: 1024000
+            mimeType:
+              type: string
+              example: image/jpeg
+            createdAt:
+              type: string
+              format: date-time
+    
+    SearchResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            results:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: 60d21b4667d0d8992e610c85
+                  type:
+                    type: string
+                    example: post
+                  content:
+                    type: string
+                    example: "This is a sample post content"
+                  author:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: 60d21b4667d0d8992e610c85
+                      username:
+                        type: string
+                        example: johndoe
+                  createdAt:
+                    type: string
+                    format: date-time
+            pagination:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  example: 1
+                limit:
+                  type: integer
+                  example: 10
+                totalResults:
+                  type: integer
+                  example: 100
+                totalPages:
+                  type: integer
+                  example: 10
+    
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Error message" 
