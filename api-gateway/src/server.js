@@ -103,6 +103,34 @@ app.use(
   })
 );
 
+// setting up proxy for our media service
+app.use(
+  "/v1/media",
+  validateToken,
+  proxy(process.env.MEDIA_SERVICE_URL, {
+    ...proxyOptions,
+    proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
+      proxyReqOpts.headers = proxyReqOpts.headers || {};
+      if (srcReq.user && srcReq.user.userId) {
+        proxyReqOpts.headers["x-user-id"] = srcReq.user.userId;
+      }
+
+      // Handle Content-Type
+      const contentType = srcReq.headers["content-type"];
+      if (!contentType || !contentType.startsWith("multipart/form-data")) {
+        proxyReqOpts.headers["Content-Type"] = "application/json";
+      }
+
+      return proxyReqOpts;
+    },
+    userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
+      logger.info("Proxy response from media service: ", proxyRes.statusCode);
+      return proxyResData;
+    },
+    parseReqBody: false, // Keep this to allow streaming for uploads
+  })
+);
+
 app.use(errorHandler);
 app.use(notFoundHandler);
 
@@ -111,4 +139,5 @@ app.listen(port, () => {
   logger.info(`Identity Service is running on ${IDENTITY_SERVICE_URL}`);
   logger.info(`Redis is running on ${process.env.REDIS_URL}`);
   logger.info(`Post Service is running on ${process.env.POST_SERVICE_URL}`);
+  logger.info(`Media Service is running on ${process.env.MEDIA_SERVICE_URL}`);
 });

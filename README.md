@@ -21,6 +21,7 @@ npm install jsonwebtoken mongoose rate-limit-redis winston rate-limiter-flexible
 npm install cors dotenv express mongoose helmet jsonwebtoken winston ioredis express-rate-limit joi
 
 # media-service
+npm install cors dotenv express mongoose helmet jsonwebtoken winston ioredis express-rate-limit joi cloudinary multer
 
 # search-service
 ```
