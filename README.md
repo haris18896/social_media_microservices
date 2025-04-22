@@ -15,3 +15,12 @@ npm install jsonwebtoken mongoose rate-limit-redis winston rate-limiter-flexible
 ```
 
 * now we are going to create 3 more servie `media-service`, `post-service` and `search-service`
+
+```bash
+# post-service
+npm install cors dotenv express mongoose helmet jsonwebtoken winston ioredis express-rate-limit
+
+# media-service
+
+# search-service
+```
