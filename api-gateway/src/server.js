@@ -12,6 +12,7 @@ const {
   errorHandler,
   notFoundHandler,
 } = require("../../identity-service/src/middleware/errorhandler");
+const { validateToken } = require("./middleware/authMiddleware");
 
 dotenv.config();
 const port = process.env.PORT || 3000;
@@ -84,6 +85,24 @@ app.use(
   })
 );
 
+// setting up proxy for our post service
+app.use(
+  "/v1/posts",
+  validateToken,
+  proxy(process.env.POST_SERVICE_URL, {
+    ...proxyOptions,
+    proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
+      proxyReqOpts.headers["Content-Type"] = "application/json";
+      proxyReqOpts.headers["x-user-id"] = srcReq.user.userId;
+      return proxyReqOpts;
+    },
+    userResDecorator: (proxyRes, proxyResData, userReq, userRes) => {
+      logger.info("Proxy response from post service: ", proxyRes.statusCode);
+      return proxyResData;
+    },
+  })
+);
+
 app.use(errorHandler);
 app.use(notFoundHandler);
 
@@ -91,4 +110,5 @@ app.listen(port, () => {
   logger.info(`API Gateway is running on port ${port}`);
   logger.info(`Identity Service is running on ${IDENTITY_SERVICE_URL}`);
   logger.info(`Redis is running on ${process.env.REDIS_URL}`);
+  logger.info(`Post Service is running on ${process.env.POST_SERVICE_URL}`);
 });
