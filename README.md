@@ -25,3 +25,31 @@ npm install cors dotenv express mongoose helmet jsonwebtoken winston ioredis exp
 
 # search-service
 ```
+
+
+
+## Install Erlang and RabbitMQ
+```bash
+brew install erlang
+erl # to veriy if its installed
+brew install rabbitmq
+brew services start rabbitmq # automaticallyn start
+rabbitmq-server # manually start
+```
+
+###  Make sure to run both `redis-server` and `rabbitmq-server`
+
+### windows
+```bash
+# copy the diretory link to `sbin` in RabbitMq Server
+# run the command in the terminal to enable rabbitMQ in local machine
+rabbitmq-plugins enable rambitmq_management
+```
+
+## Connection to RabbitMQ
+* first of all install the dependency
+* then user the connect method
+```bash
+# in post-service and media-service
+npm install amqplib
+```

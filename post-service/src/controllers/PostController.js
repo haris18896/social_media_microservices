@@ -2,6 +2,7 @@ const logger = require("../utils/logger");
 const Post = require("../models/Post");
 const { validationCreatePost } = require("../utils/validation");
 const Redis = require("ioredis");
+const { publishEvent } = require("../utils/rabbitmq");
 
 const redisClient = new Redis(process.env.REDIS_URL);
 
@@ -32,6 +33,18 @@ const createPost = async (req, res) => {
     });
 
     await newlyCreatedPost.save();
+
+    // Publish post created event
+    await publishEvent(
+      "post.created",
+      JSON.stringify({
+        postId: newlyCreatedPost._id.toString(),
+        userId: req.user.toString(),
+        content: newlyCreatedPost.content,
+        mediaIds: newlyCreatedPost.mediaIds,
+      })
+    );
+
     await invalidatePostCache(req, newlyCreatedPost?._id.toString());
     logger.info("Newly created post", newlyCreatedPost);
     return res.status(201).json({
@@ -146,6 +159,16 @@ const deletePost = async (req, res) => {
         message: "Post not found",
       });
     }
+
+    // Publish post delete method
+    await publishEvent(
+      "post.delete",
+      JSON.stringify({
+        postId: post._id.toString(),
+        userId: req.user,
+        mediaIds: post.mediaIds,
+      })
+    );
 
     await invalidatePostCache(req, postId);
 

@@ -10,6 +10,7 @@ const logger = require("./utils/logger");
 const ConnectToDB = require("./database/db");
 const postRoutes = require("./routes/postRoutes");
 const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
+const { connectToRabbitMQ } = require("./utils/rabbitmq");
 
 dotenv.config();
 
@@ -60,11 +61,19 @@ app.use(
 app.use(errorHandler);
 app.use(notFoundHandler);
 
-// start the server
-app.listen(PORT, () => {
-  logger.info(`Server is running on port ${PORT}`);
-});
+async function startServer() {
+  try {
+    await connectToRabbitMQ();
+    app.listen(PORT, () => {
+      logger.info(`Post Service is running on port ${PORT}`);
+    });
+  } catch (error) {
+    logger.error("Failed to connect to RabbitMQ", error);
+    process.exit(1);
+  }
+}
 
+startServer();
 // Unhandled promise rejection
 process.on("unhandledRejection", (reason, promise) => {
   logger.error("Unhandled Rejection at:", promise, "reason:", reason);

@@ -12,6 +12,8 @@ const logger = require("./utils/logger");
 const ConnectToDB = require("./database/db");
 const mediaRoutes = require("./routes/media-routes");
 const { errorHandler } = require("./middleware/errorHandler");
+const { connectToRabbitMQ, consumeEvent } = require("./utils/rabbitmq");
+const { handlePostDeleted } = require("./eventHandlers/media-event-handler");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -52,9 +54,22 @@ const sensitiveEndpoints = rateLimit({
 
 app.use("/api/media", sensitiveEndpoints, mediaRoutes);
 
-app.listen(PORT, () => {
-  logger.info(`Server is running on port ${PORT}`);
-});
+async function startServer() {
+  try {
+    await connectToRabbitMQ();
+
+    // consume all the events
+    await consumeEvent("post.delete", handlePostDeleted);
+    app.listen(PORT, () => {
+      logger.info(`Media Service is running on port ${PORT}`);
+    });
+  } catch (error) {
+    logger.error("Failed to connect to RabbitMQ", error);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 // Unhandled promise rejection
 process.on("unhandledRejection", (reason, promise) => {
