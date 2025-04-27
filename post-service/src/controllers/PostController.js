@@ -74,7 +74,7 @@ const getAllPosts = async (req, res) => {
       return res.status(200).json({
         success: true,
         message: "Posts fetched successfully",
-        posts: cachedPosts,
+        posts: JSON.parse(cachedPosts),
       });
     }
 
@@ -98,7 +98,7 @@ const getAllPosts = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Posts fetched successfully",
-      posts: JSON.stringify(result),
+      posts: result,
     });
   } catch (error) {
     logger.error("Error fetching posts", error);

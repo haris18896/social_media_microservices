@@ -11,7 +11,10 @@ const logger = require("./utils/logger");
 const searchRoutes = require("./routes/search-routes");
 const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 const { connectToRabbitMQ, consumeEvent } = require("./utils/rabbitmq");
-const { handlePostCreated } = require("./eventHandlers/search-event-handlers");
+const {
+  handlePostCreated,
+  handlePostDeleted,
+} = require("./eventHandlers/search-event-handlers");
 const ConnectToDB = require("./database/db");
 
 const app = express();
@@ -25,8 +28,6 @@ const redisClient = new Redis(process.env.REDIS_URL);
 app.use(cors());
 app.use(helmet());
 app.use(express.json());
-app.use(errorHandler);
-app.use(notFoundHandler);
 
 // IP based rate limiting for sensitive endpoints
 const sensitiveEndpoints = rateLimit({
@@ -49,14 +50,26 @@ const sensitiveEndpoints = rateLimit({
 // apply rate limiting to sensitive endpoints
 app.use("/api/search", sensitiveEndpoints);
 
-// routes
-app.use("/api/search", searchRoutes);
+// Redis caching
+app.use(
+  "/api/search",
+  async (req, res, next) => {
+    req.redisClient = redisClient;
+    next();
+  },
+  searchRoutes
+);
+
+// Error handling middleware should be after routes
+app.use(errorHandler);
+app.use(notFoundHandler);
 
 async function startServer() {
   try {
     await connectToRabbitMQ();
     // consume then events  / subscribe to the events
     await consumeEvent("post.created", handlePostCreated);
+    await consumeEvent("post.delete", handlePostDeleted);
     app.listen(PORT, () => {
       logger.info(`Search Service is running on port ${PORT}`);
     });
